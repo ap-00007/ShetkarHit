@@ -1,4 +1,4 @@
-import { Sprout, Mic, ClipboardList, User, Globe } from 'lucide-react';
+import { Sprout, Mic, ClipboardList, User, Globe, LogOut, X } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
 import { profile } from '@/data/mockData';
 import type { OnboardingResult } from '@/components/auth/OnboardingPage';
@@ -9,78 +9,128 @@ interface Props {
   current: Page;
   onNavigate: (p: Page) => void;
   farmProfile?: OnboardingResult | null;
+  /** Mobile: is the sidebar overlay open? */
+  isOpen?: boolean;
+  /** Mobile: close the sidebar overlay */
+  onClose?: () => void;
 }
 
-export function SidebarNav({ current, onNavigate, farmProfile }: Props) {
+export function SidebarNav({ current, onNavigate, farmProfile, isOpen = false, onClose }: Props) {
   const { lang, toggleLang, t } = useLang();
 
-  const items = [
+  const navItems = [
     { id: 'today' as const, label: t('navToday'), icon: Sprout },
     { id: 'ask' as const, label: t('navAsk'), icon: Mic },
     { id: 'schemes' as const, label: t('navSchemes'), icon: ClipboardList },
   ];
 
-  return (
-    <aside className="hidden lg:flex fixed left-0 top-0 h-full w-60 flex-col border-r border-ochre-100 bg-white">
-      <div className="px-5 pt-6 pb-4">
+  const displayName = farmProfile?.name || profile.name;
+  const displayLocation = farmProfile
+    ? `${farmProfile.acres ? farmProfile.acres + ' एकर · ' : ''}${farmProfile.village || ''}`.trim()
+    : `${profile.village}, ${profile.state}`;
+
+  const handleNavigate = (p: Page) => {
+    onNavigate(p);
+    onClose?.();
+  };
+
+  const sidebar = (
+    <aside className="flex h-full w-64 flex-col bg-white border-r border-ochre-100">
+      {/* Brand + close button (mobile only) */}
+      <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-700">
             <Sprout className="h-5 w-5 text-white" />
           </div>
           <span className="text-lg font-bold text-brand-700">{t('appName')}</span>
         </div>
-        <div className="mt-3 text-sm text-muted">
-          <p className="font-medium text-ink">
-            {farmProfile ? (farmProfile.village || profile.name) : profile.name}
-          </p>
-          <p className="text-xs">
-            {farmProfile
-              ? `${farmProfile.acres ? farmProfile.acres + ' एकर · ' : ''}${farmProfile.village || ''}${farmProfile.district ? ', ' + farmProfile.district : ''}`
-              : `${profile.village}, ${profile.state}`
-            }
-          </p>
-        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden flex h-8 w-8 items-center justify-center rounded-full hover:bg-ochre-100 transition-colors text-muted"
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      <nav className="mt-2 flex-1 px-3">
-        {items.map((item) => {
+      {/* User info */}
+      <div className="px-5 pb-4 border-b border-ochre-50">
+        <p className="font-semibold text-sm text-ink">{displayName}</p>
+        <p className="text-xs text-muted mt-0.5">{displayLocation}</p>
+      </div>
+
+      {/* Nav items */}
+      <nav className="flex-1 px-3 py-3 space-y-0.5">
+        {navItems.map((item) => {
           const Icon = item.icon;
           const active = current === item.id;
           return (
             <button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`mb-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-colors ${
-                active
-                  ? 'bg-brand-700 text-white'
-                  : 'text-ink hover:bg-brand-50'
+              onClick={() => handleNavigate(item.id)}
+              className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
+                active ? 'bg-brand-700 text-white' : 'text-ink hover:bg-brand-50'
               }`}
             >
-              <Icon className="h-5 w-5 shrink-0" />
-              <span>{item.label}</span>
+              <Icon className="h-4.5 w-4.5 shrink-0" style={{ width: '1.125rem', height: '1.125rem' }} />
+              {item.label}
             </button>
           );
         })}
       </nav>
 
-      <div className="border-t border-ochre-100 px-3 py-4">
+      {/* Bottom items */}
+      <div className="border-t border-ochre-100 px-3 py-3 space-y-0.5">
         <button
-          onClick={() => onNavigate('account')}
-          className={`mb-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium transition-colors ${
+          onClick={() => handleNavigate('account')}
+          className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
             current === 'account' ? 'bg-brand-700 text-white' : 'text-ink hover:bg-brand-50'
           }`}
         >
-          <User className="h-5 w-5 shrink-0" />
-          <span>{t('navAccount')}</span>
+          <User style={{ width: '1.125rem', height: '1.125rem' }} className="shrink-0" />
+          {t('navAccount')}
         </button>
         <button
           onClick={toggleLang}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-medium text-ink transition-colors hover:bg-brand-50"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-ink hover:bg-brand-50 transition-colors"
         >
-          <Globe className="h-5 w-5 shrink-0" />
-          <span>{lang === 'mr' ? 'English' : 'मराठी'}</span>
+          <Globe style={{ width: '1.125rem', height: '1.125rem' }} className="shrink-0" />
+          {lang === 'mr' ? 'English' : 'मराठी'}
+        </button>
+        <button
+          id="sidebar-logout-btn"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-urgent hover:bg-urgent/5 transition-colors"
+        >
+          <LogOut style={{ width: '1.125rem', height: '1.125rem' }} className="shrink-0" />
+          {t('logout')}
         </button>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop: fixed sidebar */}
+      <div className="hidden lg:flex fixed left-0 top-0 h-full w-64 z-40">
+        {sidebar}
+      </div>
+
+      {/* Mobile: overlay */}
+      {isOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Scrim */}
+          <div
+            className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          {/* Slide-in panel */}
+          <div className="relative z-10 animate-slide-up" style={{ animation: 'slideInLeft 0.25s ease-out' }}>
+            {sidebar}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

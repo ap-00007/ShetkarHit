@@ -13,12 +13,25 @@ import { AccountPage } from '@/components/account/AccountPage';
 type Screen = 'intro' | 'login' | 'signup' | 'otp' | 'onboarding' | 'app';
 type Page = 'today' | 'ask' | 'schemes' | 'account';
 
+/** Compute profile completeness % from the collected onboarding data */
+function computeCompleteness(p: OnboardingResult | null): number {
+  if (!p) return 0;
+  const checks = [
+    !!p.name,
+    !!(p.village || p.district),
+    !!p.acres,
+    p.crops.some((c) => c.name.trim() !== ''),
+    !!(p.soil && p.irrigation),
+    !!p.waterSource,
+  ];
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+}
+
 function App() {
   const [screen, setScreen] = useState<Screen>('intro');
   const [page, setPage] = useState<Page>('today');
   const [otpFlow, setOtpFlow] = useState<'login' | 'signup'>('login');
   const [mobile, setMobile] = useState('');
-  // Collected from onboarding (used to personalise greeting)
   const [farmProfile, setFarmProfile] = useState<OnboardingResult | null>(null);
 
   const handleOtpSent = useCallback((m: string, flow: 'login' | 'signup') => {
@@ -27,7 +40,6 @@ function App() {
     setScreen('otp');
   }, []);
 
-  /** Called by OtpPage after OTP boxes filled — isNewUser = true for signup flow */
   const handleVerified = useCallback((isNewUser: boolean) => {
     if (isNewUser) {
       setScreen('onboarding');
