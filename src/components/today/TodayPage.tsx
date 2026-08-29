@@ -6,8 +6,9 @@ import { ThreeDayForecast } from './ThreeDayForecast';
 import { ProfitOutlook, MarketSnapshot } from './ProfitAndMarket';
 import { WhatIfToggle } from './WhatIfToggle';
 import { decision } from '@/data/mockData';
+import type { OnboardingResult } from '@/components/auth/OnboardingPage';
 
-export function TodayPage() {
+export function TodayPage({ farmProfile }: { farmProfile?: OnboardingResult | null }) {
   const { t } = useLang();
   const [crops] = useState(['Onion', 'Cotton']);
   const [activeCrop, setActiveCrop] = useState('Onion');
@@ -30,7 +31,12 @@ export function TodayPage() {
         <h1 className="text-2xl lg:text-3xl font-bold text-ink">
           {t('greeting')}
         </h1>
-        <p className="text-sm text-muted mt-0.5">{t('farmInfo')}</p>
+        <p className="text-sm text-muted mt-0.5">
+          {farmProfile
+            ? `${farmProfile.acres ? farmProfile.acres + ' एकर' : ''} ${farmProfile.village ? '· ' + farmProfile.village : ''}`.trim()
+            : t('farmInfo')
+          }
+        </p>
       </div>
 
       {/* Crop selector chips */}

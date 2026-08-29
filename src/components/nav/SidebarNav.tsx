@@ -1,15 +1,17 @@
 import { Sprout, Mic, ClipboardList, User, Globe } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
 import { profile } from '@/data/mockData';
+import type { OnboardingResult } from '@/components/auth/OnboardingPage';
 
 type Page = 'today' | 'ask' | 'schemes' | 'account';
 
 interface Props {
   current: Page;
   onNavigate: (p: Page) => void;
+  farmProfile?: OnboardingResult | null;
 }
 
-export function SidebarNav({ current, onNavigate }: Props) {
+export function SidebarNav({ current, onNavigate, farmProfile }: Props) {
   const { lang, toggleLang, t } = useLang();
 
   const items = [
@@ -28,8 +30,15 @@ export function SidebarNav({ current, onNavigate }: Props) {
           <span className="text-lg font-bold text-brand-700">{t('appName')}</span>
         </div>
         <div className="mt-3 text-sm text-muted">
-          <p className="font-medium text-ink">{profile.name}</p>
-          <p className="text-xs">{profile.village}, {profile.state}</p>
+          <p className="font-medium text-ink">
+            {farmProfile ? (farmProfile.village || profile.name) : profile.name}
+          </p>
+          <p className="text-xs">
+            {farmProfile
+              ? `${farmProfile.acres ? farmProfile.acres + ' एकर · ' : ''}${farmProfile.village || ''}${farmProfile.district ? ', ' + farmProfile.district : ''}`
+              : `${profile.village}, ${profile.state}`
+            }
+          </p>
         </div>
       </div>
 

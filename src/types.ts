@@ -49,15 +49,33 @@ export interface ChatMessage {
   ts: number;
 }
 
+/** A single crop grown by the farmer */
+export interface CropEntry {
+  name: string;
+  variety: string;
+  sowingDate: string;
+}
+
+/** A candidate crop shown in the Crop Comparison panel */
+export interface CropCandidate {
+  id: string;
+  emoji: string;
+  nameMr: string;
+  nameEn: string;
+  profitRange: string;       // e.g. "₹60,000–₹95,000 / एकर"
+  waterReq: string;          // e.g. "कमी (400–600 मिमी)"
+  duration: string;          // e.g. "90–110 दिवस"
+  priceTrend: 'up' | 'down' | 'stable';
+  priceNote: string;         // e.g. "बाजार दर वाढतोय"
+}
+
 export interface ProfileData {
   name: string;
   mobile: string;
   village: string;
   district: string;
   state: string;
-  crop: string;
-  variety: string;
-  sowingDate: string;
+  crops: CropEntry[];         // replaces single crop/variety/sowingDate
   area: string;
   soil: string;
   irrigation: string;

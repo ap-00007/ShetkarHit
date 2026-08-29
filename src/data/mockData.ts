@@ -6,6 +6,7 @@ import type {
   Scheme,
   ProfileData,
   WhatIfToggle,
+  CropCandidate,
 } from '@/types';
 
 export const profile: ProfileData = {
@@ -14,9 +15,9 @@ export const profile: ProfileData = {
   village: 'Kopargaon',
   district: 'Ahmednagar',
   state: 'Maharashtra',
-  crop: 'Onion',
-  variety: 'N-53',
-  sowingDate: '2026-07-15',
+  crops: [
+    { name: 'Onion', variety: 'N-53', sowingDate: '2026-07-15' },
+  ],
   area: '4 acres',
   soil: 'Medium (Loamy)',
   irrigation: 'Drip',
@@ -148,3 +149,62 @@ export const chatResponses: Record<string, string> = {
   fertilizer:
     'कांद्यासाठी बेसल डोस: ५० किलो युरिया + १०० किलो एसएसपी + २५ किलो एमओपी प्रति एकर. बुडवणी अवस्थेत २५ किलो युरिया टॉप ड्रेसिंग करा.',
 };
+
+/** Candidate crops shown in the Crop Comparison panel */
+export const cropCandidates: CropCandidate[] = [
+  {
+    id: 'onion',
+    emoji: '🧅',
+    nameMr: 'कांदा',
+    nameEn: 'Onion',
+    profitRange: '₹60,000–₹1,10,000 / एकर',
+    waterReq: 'मध्यम (350–550 मिमी)',
+    duration: '90–120 दिवस',
+    priceTrend: 'up',
+    priceNote: 'डिसेंबरमध्ये दर वाढतो',
+  },
+  {
+    id: 'cotton',
+    emoji: '🌿',
+    nameMr: 'कापूस',
+    nameEn: 'Cotton',
+    profitRange: '₹40,000–₹75,000 / एकर',
+    waterReq: 'मध्यम (700–1000 मिमी)',
+    duration: '150–180 दिवस',
+    priceTrend: 'stable',
+    priceNote: 'दर स्थिर आहेत',
+  },
+  {
+    id: 'soybean',
+    emoji: '🫘',
+    nameMr: 'सोयाबीन',
+    nameEn: 'Soybean',
+    profitRange: '₹30,000–₹55,000 / एकर',
+    waterReq: 'कमी (450–700 मिमी)',
+    duration: '90–110 दिवस',
+    priceTrend: 'up',
+    priceNote: 'निर्यात मागणी जास्त',
+  },
+  {
+    id: 'tomato',
+    emoji: '🍅',
+    nameMr: 'टोमॅटो',
+    nameEn: 'Tomato',
+    profitRange: '₹80,000–₹2,00,000 / एकर',
+    waterReq: 'जास्त (600–1200 मिमी)',
+    duration: '60–90 दिवस',
+    priceTrend: 'up',
+    priceNote: 'उच्च नफा, जास्त काळजी लागते',
+  },
+  {
+    id: 'wheat',
+    emoji: '🌾',
+    nameMr: 'गहू',
+    nameEn: 'Wheat',
+    profitRange: '₹20,000–₹40,000 / एकर',
+    waterReq: 'मध्यम (450–650 मिमी)',
+    duration: '110–130 दिवस',
+    priceTrend: 'stable',
+    priceNote: 'हमी भाव उपलब्ध',
+  },
+];
