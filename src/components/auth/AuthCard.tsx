@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useLang } from '@/context/LangContext';
-import { Sprout, ArrowLeft, Phone } from 'lucide-react';
-import { FarmIllustration } from './FarmIllustration';
+import { Sprout, ArrowLeft, Mail, Lock, Eye, EyeOff, User, Loader2, AlertCircle } from 'lucide-react';
+import farmBgImg from '@/assets/farm-landscape.jpg';
 
 /* ─────────────────────────────────────────────
-   Shared two-column auth shell
+   Full-screen background Auth Shell (Centered Form)
 ───────────────────────────────────────────── */
 interface AuthShellProps {
   headline: string;
@@ -19,81 +19,64 @@ function AuthShell({ headline, subtitle, onBack, switchText, onSwitch, children 
   const { lang, toggleLang, t } = useLang();
 
   return (
-    <div className="min-h-screen bg-cream flex flex-col lg:flex-row overflow-hidden">
-      {/* ── Left: illustration panel ── */}
-      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-green-50 to-ochre-50" />
-        <div className="absolute -top-20 -left-20 h-80 w-80 rounded-full bg-brand-200/25 blur-3xl" />
-        <div className="absolute bottom-10 right-0 h-52 w-52 rounded-full bg-ochre-200/20 blur-2xl" />
-        <FarmIllustration className="relative z-10 w-full h-full p-6" />
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-x-hidden p-4 sm:p-6">
+      {/* ── Fullscreen Background Image ── */}
+      <img
+        src={farmBgImg}
+        alt="ShetkariHit Farm Background"
+        className="fixed inset-0 w-full h-full object-cover object-center -z-20"
+      />
 
-        {/* Brand watermark */}
-        <div className="absolute top-6 left-6 flex items-center gap-2 z-20">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-700 shadow-md">
-            <Sprout className="h-5 w-5 text-white" />
+      {/* ── Ambient Soft Vignette & Blur Overlay ── */}
+      <div className="fixed inset-0 bg-black/25 backdrop-blur-[2px] -z-10" />
+
+      {/* ── Top Floating Navigation Bar ── */}
+      <div className="fixed top-4 left-4 right-4 sm:top-6 sm:left-8 sm:right-8 flex items-center justify-between z-30 pointer-events-none">
+        {/* Brand Logo */}
+        <div className="pointer-events-auto flex items-center gap-2 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-lg border border-white/80">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-700 shadow-sm">
+            <Sprout className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold text-brand-700">{t('appName')}</span>
+          <span className="font-bold text-brand-700 text-sm tracking-wide">{t('appName')}</span>
         </div>
+
+        {/* Language Switcher */}
+        <button
+          onClick={toggleLang}
+          className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/80 bg-white/90 backdrop-blur-md px-4 py-2 text-xs font-semibold text-ink shadow-lg hover:bg-brand-50 transition-colors"
+        >
+          {lang === 'mr' ? 'English' : 'मराठी'}
+        </button>
       </div>
 
-      {/* ── Right: form panel ── */}
-      <div className="flex flex-1 flex-col">
-        {/* Mobile header */}
-        <div className="flex items-center justify-between px-6 pt-6 lg:hidden">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-700">
-              <Sprout className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-brand-700">{t('appName')}</span>
-          </div>
-          <button
-            onClick={toggleLang}
-            className="rounded-full border border-ochre-200 bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand-50 transition-colors"
-          >
-            {lang === 'mr' ? 'EN' : 'मर'}
-          </button>
-        </div>
+      {/* ── Centered Auth Card ── */}
+      <div className="w-full max-w-[440px] my-16 sm:my-20 z-20 animate-slide-up">
+        {/* Back / Cancel link */}
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/90 hover:text-white mb-3 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/20 transition-all hover:bg-black/40 group shadow-sm"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+          {t('cancel')}
+        </button>
 
-        {/* Language toggle — desktop */}
-        <div className="hidden lg:flex justify-end px-8 pt-6">
-          <button
-            onClick={toggleLang}
-            className="flex items-center gap-1.5 rounded-full border border-ochre-200 bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand-50"
-          >
-            {lang === 'mr' ? 'English' : 'मराठी'}
-          </button>
-        </div>
+        {/* Glassmorphic White Card */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/90">
+          <h2 className="text-2xl font-bold text-ink mb-1.5 leading-tight">{headline}</h2>
+          <p className="text-xs sm:text-sm text-muted mb-6 leading-relaxed">{subtitle}</p>
 
-        {/* Form card */}
-        <div className="flex flex-1 items-center justify-center px-6 py-8">
-          <div className="w-full max-w-[440px] animate-slide-up">
-            {/* Back button */}
+          {children}
+
+          {/* Switch between Login and Signup */}
+          <p className="mt-5 text-center text-xs sm:text-sm text-muted">
             <button
-              onClick={onBack}
-              className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink mb-8 transition-colors group"
+              type="button"
+              onClick={onSwitch}
+              className="font-semibold text-brand-700 hover:text-brand-800 hover:underline transition-colors"
             >
-              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-              {t('cancel')}
+              {switchText}
             </button>
-
-            {/* Card */}
-            <div className="card p-8 shadow-md">
-              <h2 className="text-2xl font-bold text-ink mb-1 leading-tight">{headline}</h2>
-              <p className="text-sm text-muted mb-7 leading-relaxed">{subtitle}</p>
-
-              {children}
-
-              {/* Switch link */}
-              <p className="mt-5 text-center text-sm text-muted">
-                <button
-                  onClick={onSwitch}
-                  className="font-semibold text-brand-700 hover:text-brand-800 hover:underline transition-colors"
-                >
-                  {switchText}
-                </button>
-              </p>
-            </div>
-          </div>
+          </p>
         </div>
       </div>
     </div>
@@ -101,102 +84,46 @@ function AuthShell({ headline, subtitle, onBack, switchText, onSwitch, children 
 }
 
 /* ─────────────────────────────────────────────
-   Shared mobile input form
+   Sign Up Page (Email & Password + Confirm Password + Required Name)
 ───────────────────────────────────────────── */
-interface MobileFormProps {
-  mobile: string;
-  setMobile: (v: string) => void;
-  onSubmit: () => void;
-  btnLabel: string;
-}
-
-function MobileForm({ mobile, setMobile, onSubmit, btnLabel }: MobileFormProps) {
-  const { t, lang } = useLang();
-  const [touched, setTouched] = useState(false);
-
-  const cleanDigits = mobile.replace(/\D/g, '');
-  const isValid = cleanDigits.length === 10 && /^[6-9]/.test(cleanDigits);
-  const showError = touched && cleanDigits.length > 0 && !isValid;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, '').slice(0, 10);
-    setMobile(raw);
-    if (!touched) setTouched(true);
-  };
-
-  const handleFormSubmit = () => {
-    setTouched(true);
-    if (isValid) {
-      onSubmit();
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-semibold text-ink mb-1.5">
-          {t('mobileLabel')}
-        </label>
-        <div className="relative">
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted text-sm font-medium select-none pointer-events-none">
-            <Phone className="h-4 w-4" />
-            <span>+91</span>
-          </div>
-          <input
-            id="mobile-input"
-            type="tel"
-            value={mobile}
-            onChange={handleChange}
-            onBlur={() => setTouched(true)}
-            placeholder={lang === 'mr' ? '९८७६५ ४३२१०' : lang === 'hi' ? '९८७६५ ४३२१०' : '98765 43210'}
-            className={`input-field pl-16 ${showError ? 'border-urgent focus:ring-urgent/30' : ''}`}
-            inputMode="numeric"
-            maxLength={10}
-          />
-        </div>
-        {showError ? (
-          <p className="mt-1.5 text-xs text-urgent font-medium animate-fade-in">
-            {lang === 'mr'
-              ? 'कृपया अचूक १० अंकी भारतीय मोबाईल क्रमांक टाका (६, ७, ८, किंवा ९ ने सुरू होणारा).'
-              : lang === 'hi'
-              ? 'कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें (6, 7, 8 या 9 से शुरू होने वाला)।'
-              : 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.'}
-          </p>
-        ) : (
-          <p className="mt-1.5 text-xs text-muted">
-            {t('otpNote')}
-          </p>
-        )}
-      </div>
-
-      <button
-        id="send-otp-btn"
-        onClick={handleFormSubmit}
-        disabled={!isValid}
-        className={`btn-primary w-full py-3.5 text-base shadow-sm transition-all ${
-          !isValid
-            ? 'opacity-50 cursor-not-allowed'
-            : 'hover:shadow-md'
-        }`}
-      >
-        {btnLabel}
-      </button>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   Sign Up Page
-───────────────────────────────────────────── */
-interface AuthPageProps {
+interface SignUpPageProps {
   onBack: () => void;
-  onOtpSent: (mobile: string, flow: 'login' | 'signup') => void;
+  onSignUp: (email: string, pass: string, name: string) => Promise<void>;
   onSwitch: () => void;
 }
 
-export function SignUpPage({ onBack, onOtpSent, onSwitch }: AuthPageProps) {
-  const { t } = useLang();
-  const [mobile, setMobile] = useState('');
+export function SignUpPage({ onBack, onSignUp, onSwitch }: SignUpPageProps) {
+  const { t, lang } = useLang();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isNameValid = name.trim().length >= 2;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isPasswordValid = password.length >= 6;
+  const isConfirmMatch = password.length > 0 && password === confirmPassword;
+  const canSubmit = isNameValid && isEmailValid && isPasswordValid && isConfirmMatch && !loading;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setError(null);
+    setLoading(true);
+
+    try {
+      await onSignUp(email.trim(), password, name.trim());
+    } catch (err: any) {
+      console.error('[SignUp]', err);
+      setError(err.message || 'Sign up failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AuthShell
@@ -206,22 +133,178 @@ export function SignUpPage({ onBack, onOtpSent, onSwitch }: AuthPageProps) {
       switchText={t('switchToLogin')}
       onSwitch={onSwitch}
     >
-      <MobileForm
-        mobile={mobile}
-        setMobile={setMobile}
-        onSubmit={() => onOtpSent(mobile, 'signup')}
-        btnLabel={t('sendOtpStart')}
-      />
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        {error && (
+          <div className="rounded-xl bg-urgent/10 border border-urgent/20 p-2.5 text-xs text-urgent flex items-center gap-2 animate-fade-in">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* 1. Name input (REQUIRED) */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1">
+            {t('fullNameLabel')} <span className="text-urgent">*</span>
+          </label>
+          <div className="relative">
+            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <input
+              id="signup-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={lang === 'mr' ? 'उदा. रवी पाटील' : 'e.g. Ravi Patil'}
+              className={`input-field pl-10 py-2.5 text-sm ${name.length > 0 && !isNameValid ? 'border-urgent focus:ring-urgent/30' : ''}`}
+              required
+              autoFocus
+            />
+          </div>
+          {name.length > 0 && !isNameValid && (
+            <p className="mt-1 text-[11px] text-urgent">{t('nameRequired')}</p>
+          )}
+        </div>
+
+        {/* 2. Email input (REQUIRED) */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1">
+            {t('emailLabel')} <span className="text-urgent">*</span>
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <input
+              id="signup-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t('emailPlaceholder')}
+              className={`input-field pl-10 py-2.5 text-sm ${email.length > 0 && !isEmailValid ? 'border-urgent focus:ring-urgent/30' : ''}`}
+              required
+              autoComplete="email"
+            />
+          </div>
+          {email.length > 0 && !isEmailValid && (
+            <p className="mt-1 text-[11px] text-urgent">{lang === 'mr' ? 'कृपया वैध ईमेल प्रविष्ट करा.' : 'Please enter a valid email address.'}</p>
+          )}
+        </div>
+
+        {/* 3. Password input (REQUIRED) */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1">
+            {t('passwordLabel')} <span className="text-urgent">*</span>
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <input
+              id="signup-password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t('passwordPlaceholder')}
+              className={`input-field pl-10 pr-10 py-2.5 text-sm ${password.length > 0 && !isPasswordValid ? 'border-urgent focus:ring-urgent/30' : ''}`}
+              required
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {password.length > 0 && !isPasswordValid && (
+            <p className="mt-1 text-[11px] text-urgent">{lang === 'mr' ? 'पासवर्ड किमान ६ अक्षरांचा असावा.' : 'Password must be at least 6 characters.'}</p>
+          )}
+        </div>
+
+        {/* 4. Confirm Password input (REQUIRED) */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1">
+            {t('confirmPasswordLabel')} <span className="text-urgent">*</span>
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <input
+              id="signup-confirm-password"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder={t('confirmPasswordPlaceholder')}
+              className={`input-field pl-10 pr-10 py-2.5 text-sm ${confirmPassword.length > 0 && !isConfirmMatch ? 'border-urgent focus:ring-urgent/30' : ''}`}
+              required
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors"
+              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {confirmPassword.length > 0 && !isConfirmMatch && (
+            <p className="mt-1 text-[11px] text-urgent">{t('passwordMismatch')}</p>
+          )}
+        </div>
+
+        {/* Submit button */}
+        <button
+          id="signup-submit-btn"
+          type="submit"
+          disabled={!canSubmit}
+          className={`btn-primary w-full py-3 text-base shadow-sm transition-all flex items-center justify-center gap-2 mt-3 ${
+            !canSubmit ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+          }`}
+        >
+          {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+          {t('signupBtn')}
+        </button>
+      </form>
     </AuthShell>
   );
 }
 
 /* ─────────────────────────────────────────────
-   Log In Page
+   Log In Page (Email & Password)
 ───────────────────────────────────────────── */
-export function LogInPage({ onBack, onOtpSent, onSwitch }: AuthPageProps) {
-  const { t } = useLang();
-  const [mobile, setMobile] = useState('');
+interface LogInPageProps {
+  onBack: () => void;
+  onLogIn: (email: string, pass: string) => Promise<void>;
+  onSwitch: () => void;
+}
+
+export function LogInPage({ onBack, onLogIn, onSwitch }: LogInPageProps) {
+  const { t, lang } = useLang();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const canSubmit = isEmailValid && password.length >= 6 && !loading;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setError(null);
+    setLoading(true);
+
+    try {
+      await onLogIn(email.trim(), password);
+    } catch (err: any) {
+      console.error('[LogIn]', err);
+      setError(
+        err.message?.includes('Invalid login credentials')
+          ? (lang === 'mr' ? 'ईमेल किंवा पासवर्ड चुकीचा आहे.' : lang === 'hi' ? 'ईमेल या पासवर्ड गलत है।' : 'Invalid email or password.')
+          : (err.message || 'Login failed. Please try again.')
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AuthShell
@@ -231,15 +314,79 @@ export function LogInPage({ onBack, onOtpSent, onSwitch }: AuthPageProps) {
       switchText={t('switchToSignup')}
       onSwitch={onSwitch}
     >
-      <MobileForm
-        mobile={mobile}
-        setMobile={setMobile}
-        onSubmit={() => onOtpSent(mobile, 'login')}
-        btnLabel={t('sendOtp')}
-      />
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        {error && (
+          <div className="rounded-xl bg-urgent/10 border border-urgent/20 p-2.5 text-xs text-urgent flex items-center gap-2 animate-fade-in">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Email input */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1">
+            {t('emailLabel')}
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <input
+              id="login-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t('emailPlaceholder')}
+              className="input-field pl-10 py-2.5 text-sm"
+              required
+              autoFocus
+              autoComplete="email"
+            />
+          </div>
+        </div>
+
+        {/* Password input */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-1">
+            {t('passwordLabel')}
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <input
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t('passwordPlaceholder')}
+              className="input-field pl-10 pr-10 py-2.5 text-sm"
+              required
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink transition-colors"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Submit button */}
+        <button
+          id="login-submit-btn"
+          type="submit"
+          disabled={!canSubmit}
+          className={`btn-primary w-full py-3 text-base shadow-sm transition-all flex items-center justify-center gap-2 mt-3 ${
+            !canSubmit ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'
+          }`}
+        >
+          {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+          {t('loginBtn')}
+        </button>
+      </form>
     </AuthShell>
   );
 }
 
-// Keep legacy export name so OtpPage import doesn't break during migration
+// Legacy export compatibility
 export { AuthShell as AuthCard };

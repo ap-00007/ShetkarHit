@@ -8,7 +8,6 @@ import { dirname, join } from 'path';
 import { translateHandler } from './routes/translate.js';
 import { detectHandler } from './routes/detect.js';
 import { askHandler, askStreamHandler } from './routes/ask.js';
-import { sendOtpHandler, verifyOtpHandler } from './routes/otp.js';
 import { todayHandler } from './routes/today.js';
 import { schemesHandler } from './routes/schemes.js';
 
@@ -45,8 +44,6 @@ app.post('/api/translate', translateHandler);
 app.post('/api/detect-lang', detectHandler);
 app.post('/api/ask', askHandler);
 app.post('/api/ask/stream', askStreamHandler);
-app.post('/api/otp/send', sendOtpHandler);
-app.post('/api/otp/verify', verifyOtpHandler);
 app.post('/api/today', todayHandler);
 app.get('/api/schemes', schemesHandler);
 

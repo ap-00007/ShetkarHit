@@ -1,63 +1,129 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { LangProvider } from '@/context/LangContext';
 import { WebShell } from '@/components/nav/WebShell';
 import { IntroPage } from '@/components/IntroPage';
 import { SignUpPage, LogInPage } from '@/components/auth/AuthCard';
-import { OtpPage } from '@/components/auth/OtpPage';
 import { OnboardingPage, type OnboardingResult } from '@/components/auth/OnboardingPage';
 import { TodayPage } from '@/components/today/TodayPage';
 import { AskPage } from '@/components/ask/AskPage';
 import { SchemesPage } from '@/components/schemes/SchemesPage';
 import { AccountPage } from '@/components/account/AccountPage';
+import {
+  signUpWithEmail,
+  signInWithEmail,
+  signOutUser,
+  getProfileByUser,
+  saveFarmerProfile,
+  supabase,
+} from '@/lib/supabase';
 
-type Screen = 'intro' | 'login' | 'signup' | 'otp' | 'onboarding' | 'app';
+type Screen = 'intro' | 'login' | 'signup' | 'onboarding' | 'app';
 type Page = 'today' | 'ask' | 'schemes' | 'account';
-
-/** Compute profile completeness % from the collected onboarding data */
-function computeCompleteness(p: OnboardingResult | null): number {
-  if (!p) return 0;
-  const checks = [
-    !!p.name,
-    !!(p.village || p.district),
-    !!p.acres,
-    p.crops.some((c) => c.name.trim() !== ''),
-    !!(p.soil && p.irrigation),
-    !!p.waterSource,
-  ];
-  return Math.round((checks.filter(Boolean).length / checks.length) * 100);
-}
 
 function App() {
   const [screen, setScreen] = useState<Screen>('intro');
   const [page, setPage] = useState<Page>('today');
-  const [otpFlow, setOtpFlow] = useState<'login' | 'signup'>('login');
-  const [mobile, setMobile] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const [farmerName, setFarmerName] = useState<string>('');
   const [farmProfile, setFarmProfile] = useState<OnboardingResult | null>(null);
 
-  const handleOtpSent = useCallback((m: string, flow: 'login' | 'signup') => {
-    setMobile(m);
-    setOtpFlow(flow);
-    setScreen('otp');
-  }, []);
+  // Restore session from Supabase & localStorage on startup
+  useEffect(() => {
+    try {
+      const savedProfile = localStorage.getItem('shetkarihit_profile');
+      if (savedProfile) {
+        setFarmProfile(JSON.parse(savedProfile));
+        setScreen('app');
+      }
 
-  const handleVerified = useCallback((isNewUser: boolean) => {
-    if (isNewUser) {
-      setScreen('onboarding');
-    } else {
-      setScreen('app');
-      setPage('today');
+      // Check active Supabase auth session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          const user = session.user;
+          setCurrentUserId(user.id);
+          setCurrentUserEmail(user.email || '');
+
+          getProfileByUser(user.id, user.email).then((profile) => {
+            if (profile) {
+              setFarmProfile(profile);
+              localStorage.setItem('shetkarihit_profile', JSON.stringify(profile));
+              setScreen('app');
+            }
+          });
+        }
+      });
+    } catch {
+      // ignore
     }
   }, []);
 
-  const handleOnboardingDone = useCallback((data: OnboardingResult) => {
+  const handleSignUp = useCallback(async (email: string, pass: string, name?: string) => {
+    const data = await signUpWithEmail(email, pass, name);
+    const user = data.user;
+    if (user) {
+      setCurrentUserId(user.id);
+      setCurrentUserEmail(user.email || email);
+    }
+    if (name) {
+      setFarmerName(name);
+    }
+    // Proceed to onboarding to complete farm profile (skips asking name again)
+    setScreen('onboarding');
+  }, []);
+
+  const handleLogIn = useCallback(async (email: string, pass: string) => {
+    const data = await signInWithEmail(email, pass);
+    const user = data.user;
+    if (user) {
+      setCurrentUserId(user.id);
+      setCurrentUserEmail(user.email || email);
+
+      const profile = await getProfileByUser(user.id, user.email);
+      if (profile) {
+        setFarmProfile(profile);
+        localStorage.setItem('shetkarihit_profile', JSON.stringify(profile));
+        setScreen('app');
+        setPage('today');
+      } else {
+        // No farm profile yet -> guide to onboarding
+        setScreen('onboarding');
+      }
+    }
+  }, []);
+
+  const handleOnboardingDone = useCallback(async (data: OnboardingResult) => {
     setFarmProfile(data);
+    localStorage.setItem('shetkarihit_profile', JSON.stringify(data));
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const uid = user?.id || currentUserId;
+      const uemail = user?.email || currentUserEmail;
+      if (uid && uemail) {
+        await saveFarmerProfile(uid, uemail, data);
+      }
+    } catch (err) {
+      console.warn('[Supabase] Save profile error:', err);
+    }
+
     setScreen('app');
     setPage('today');
-  }, []);
+  }, [currentUserId, currentUserEmail]);
 
   const handleOnboardingSkip = useCallback(() => {
     setScreen('app');
     setPage('today');
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await signOutUser();
+    localStorage.removeItem('shetkarihit_profile');
+    setFarmProfile(null);
+    setCurrentUserId('');
+    setCurrentUserEmail('');
+    setFarmerName('');
+    setScreen('intro');
   }, []);
 
   if (screen === 'intro') {
@@ -76,7 +142,7 @@ function App() {
       <LangProvider>
         <SignUpPage
           onBack={() => setScreen('intro')}
-          onOtpSent={handleOtpSent}
+          onSignUp={handleSignUp}
           onSwitch={() => setScreen('login')}
         />
       </LangProvider>
@@ -88,21 +154,8 @@ function App() {
       <LangProvider>
         <LogInPage
           onBack={() => setScreen('intro')}
-          onOtpSent={handleOtpSent}
+          onLogIn={handleLogIn}
           onSwitch={() => setScreen('signup')}
-        />
-      </LangProvider>
-    );
-  }
-
-  if (screen === 'otp') {
-    return (
-      <LangProvider>
-        <OtpPage
-          mobile={mobile}
-          flow={otpFlow}
-          onBack={() => setScreen(otpFlow === 'signup' ? 'signup' : 'login')}
-          onVerified={handleVerified}
         />
       </LangProvider>
     );
@@ -112,6 +165,7 @@ function App() {
     return (
       <LangProvider>
         <OnboardingPage
+          initialName={farmerName || farmProfile?.name || ''}
           onDone={handleOnboardingDone}
           onSkip={handleOnboardingSkip}
         />
@@ -121,12 +175,17 @@ function App() {
 
   return (
     <LangProvider>
-      <WebShell current={page} onNavigate={setPage} farmProfile={farmProfile}>
+      <WebShell current={page} onNavigate={setPage} farmProfile={farmProfile} onLogout={handleLogout}>
         {page === 'today' && <TodayPage farmProfile={farmProfile} />}
         {page === 'ask' && <AskPage farmContext={(farmProfile ?? {}) as Record<string, unknown>} />}
         {page === 'schemes' && <SchemesPage farmProfile={farmProfile} />}
-        {page === 'account' && <AccountPage />}
-
+        {page === 'account' && (
+          <AccountPage
+            farmProfile={farmProfile}
+            userEmail={currentUserEmail}
+            onLogout={handleLogout}
+          />
+        )}
       </WebShell>
     </LangProvider>
   );

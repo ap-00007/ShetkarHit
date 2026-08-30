@@ -11,9 +11,10 @@ interface Props {
   onNavigate: (p: Page) => void;
   children: ReactNode;
   farmProfile?: OnboardingResult | null;
+  onLogout?: () => void;
 }
 
-export function WebShell({ current, onNavigate, children, farmProfile }: Props) {
+export function WebShell({ current, onNavigate, children, farmProfile, onLogout }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -25,6 +26,7 @@ export function WebShell({ current, onNavigate, children, farmProfile }: Props) 
         farmProfile={farmProfile}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onLogout={onLogout}
       />
 
       {/* Mobile top header — visible only below lg */}

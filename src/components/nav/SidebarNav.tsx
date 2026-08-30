@@ -13,9 +13,10 @@ interface Props {
   isOpen?: boolean;
   /** Mobile: close the sidebar overlay */
   onClose?: () => void;
+  onLogout?: () => void;
 }
 
-export function SidebarNav({ current, onNavigate, farmProfile, isOpen = false, onClose }: Props) {
+export function SidebarNav({ current, onNavigate, farmProfile, isOpen = false, onClose, onLogout }: Props) {
   const { lang, toggleLang, t } = useLang();
 
   const navItems = [
@@ -95,6 +96,10 @@ export function SidebarNav({ current, onNavigate, farmProfile, isOpen = false, o
         <LangSelector variant="pills" className="w-full justify-center" />
         <button
           id="sidebar-logout-btn"
+          onClick={() => {
+            onClose?.();
+            onLogout?.();
+          }}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-urgent hover:bg-urgent/5 transition-colors"
         >
           <LogOut style={{ width: '1.125rem', height: '1.125rem' }} className="shrink-0" />

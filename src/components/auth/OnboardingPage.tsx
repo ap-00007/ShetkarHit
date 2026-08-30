@@ -193,19 +193,21 @@ function CropRow({
    Main component with Validators
 ═══════════════════════════════════════════ */
 interface Props {
+  initialName?: string;
   onDone: (data: OnboardingResult) => void;
   onSkip: () => void;
 }
 
 const TOTAL_STEPS = 6;
 
-export function OnboardingPage({ onDone, onSkip }: Props) {
+export function OnboardingPage({ initialName = '', onDone, onSkip }: Props) {
   const { lang, t } = useLang();
-  const [step, setStep] = useState(0);
+  // If name was provided during signup, start directly at Step 1 (Location)
+  const [step, setStep] = useState(initialName.trim().length >= 2 ? 1 : 0);
   const [showCompare, setShowCompare] = useState(false);
 
   // Form state
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName || '');
   const [village, setVillage] = useState('');
   const [district, setDistrict] = useState('Ahmednagar');
   const [state, setState] = useState('Maharashtra');

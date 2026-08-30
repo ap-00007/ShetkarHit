@@ -4,6 +4,7 @@ import { useLang } from '@/context/LangContext';
 import { ProfileSection, ProfileSectionWithChildren } from './ProfileSection';
 import { CropComparePanel } from '@/components/auth/CropComparePanel';
 import type { CropEntry } from '@/types';
+import type { OnboardingResult } from '@/components/auth/OnboardingPage';
 
 /* ─── Milestoned progress bar ─── */
 const MILESTONES = [
@@ -16,7 +17,6 @@ const MILESTONES = [
 ] as const;
 
 function MilestonedBar({ pct, labels }: { pct: number; labels: string[] }) {
-  // Each milestone is at 0%, 20%, 40%, 60%, 80%, 100%
   const filledCount = Math.round((pct / 100) * (labels.length - 1));
   return (
     <div className="px-1">
@@ -103,14 +103,31 @@ function SettingsRow({
 /* ═══════════════════════════════════════
    AccountPage
 ═══════════════════════════════════════ */
-export function AccountPage() {
+interface AccountPageProps {
+  farmProfile?: OnboardingResult | null;
+  userEmail?: string;
+  onLogout?: () => void;
+}
+
+export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPageProps = {}) {
   const { t, lang, toggleLang } = useLang();
   const [voiceOn, setVoiceOn] = useState(true);
   const [showCompare, setShowCompare] = useState(false);
-  const [crops, setCrops] = useState<CropEntry[]>([]);
+  const [crops, setCrops] = useState<CropEntry[]>(farmProfile?.crops || []);
 
   const milestoneLabels = MILESTONES.map((k) => t(k));
-  const completeness = 0;
+  
+  // Calculate completeness percentage based on active farm profile
+  const allCrops = farmProfile?.crops?.length ? farmProfile.crops : crops;
+  const checks = [
+    Boolean(farmProfile?.name),
+    Boolean(farmProfile?.village || farmProfile?.district),
+    Boolean(farmProfile?.acres),
+    allCrops.some((c) => c.name && c.name.trim() !== ''),
+    Boolean(farmProfile?.soil && farmProfile?.irrigation),
+    Boolean(farmProfile?.waterSource),
+  ];
+  const completeness = farmProfile ? Math.round((checks.filter(Boolean).length / checks.length) * 100) : 0;
 
   const handleAddCropFromComparison = (crop: CropEntry) => {
     setCrops((prev) => [...prev, crop]);
@@ -139,21 +156,24 @@ export function AccountPage() {
           <ProfileSection
             title={t('personalInfo')}
             rows={[
-              { label: t('name'), value: '—' },
-              { label: t('mobile'), value: '—' },
+              { label: t('name'), value: farmProfile?.name || '—' },
+              { label: t('emailLabel') || 'Email', value: userEmail || '—' },
             ]}
           />
           <ProfileSection
             title={t('location')}
             rows={[
-              { label: t('village'), value: '—' },
-              { label: t('district'), value: '—' },
-              { label: t('state'), value: '—' },
+              { label: t('village'), value: farmProfile?.village || '—' },
+              { label: t('district'), value: farmProfile?.district || '—' },
+              { label: t('state'), value: farmProfile?.state || 'Maharashtra' },
             ]}
           />
           <ProfileSection
             title={t('farmLand')}
-            rows={[{ label: t('area'), value: '—' }]}
+            rows={[{
+              label: t('area'),
+              value: farmProfile?.acres ? `${farmProfile.acres} ${lang === 'mr' ? 'एकर' : 'acres'}` : '—'
+            }]}
           />
         </div>
 
@@ -162,13 +182,13 @@ export function AccountPage() {
           {/* Current Crop card — multi-crop */}
           <ProfileSectionWithChildren title={t('currentCrop')}>
             <div className="space-y-0">
-              {crops.length === 0 ? (
+              {allCrops.length === 0 ? (
                 <p className="text-sm text-muted py-2">—</p>
               ) : (
-                crops.map((crop, i) => (
+                allCrops.map((crop, i) => (
                   <div
                     key={i}
-                    className={`py-3 ${i < crops.length - 1 ? 'border-b border-ochre-50' : ''}`}
+                    className={`py-3 ${i < allCrops.length - 1 ? 'border-b border-ochre-50' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
@@ -204,20 +224,11 @@ export function AccountPage() {
           <ProfileSection
             title={t('soilIrrigation')}
             rows={[
-              { label: t('soil'), value: '—' },
-              { label: t('irrigation'), value: '—' },
-              { label: t('waterSource'), value: '—' },
+              { label: t('soil'), value: farmProfile?.soil || '—' },
+              { label: t('irrigation'), value: farmProfile?.irrigation || '—' },
+              { label: t('waterSource'), value: farmProfile?.waterSource || '—' },
             ]}
           />
-
-          {/* Add more info prompt */}
-          <div className="card p-5">
-            <h3 className="font-semibold text-sm text-ink mb-3">{t('addMoreInfo')}</h3>
-            <button className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ochre-200 py-3 text-sm font-medium text-muted hover:border-brand-400 hover:text-brand-700 transition-colors">
-              <Plus className="h-4 w-4" />
-              {t('addMoreInfo')}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -248,11 +259,9 @@ export function AccountPage() {
             className={`relative h-6 w-11 rounded-full transition-colors ${
               voiceOn ? 'bg-brand-700' : 'bg-gray-200'
             }`}
-            aria-pressed={voiceOn}
-            role="switch"
           >
             <span
-              className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                 voiceOn ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -263,6 +272,7 @@ export function AccountPage() {
         {/* Logout */}
         <button
           id="logout-btn"
+          onClick={onLogout}
           className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-urgent hover:bg-urgent/5 transition-colors rounded-b-2xl"
         >
           <LogOut className="h-5 w-5" />
