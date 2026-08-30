@@ -42,15 +42,17 @@ export function WhatIfToggle({ toggles: initialToggles = [] }: Props) {
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm text-ink flex-1">{tg.label}</span>
               <button
+                type="button"
+                role="switch"
+                aria-checked={tg.enabled}
                 onClick={() => handleToggle(tg.id)}
-                className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   tg.enabled ? 'bg-brand-700' : 'bg-gray-200'
                 }`}
-                aria-pressed={tg.enabled}
               >
                 <span
-                  className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                    tg.enabled ? 'translate-x-6' : 'translate-x-1'
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    tg.enabled ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>

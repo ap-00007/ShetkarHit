@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Globe, LogOut, Mic, Plus, ChevronRight } from 'lucide-react';
+import { Globe, LogOut, Mic, Plus, ChevronRight, Pencil, CheckCircle2 } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
 import { ProfileSection, ProfileSectionWithChildren } from './ProfileSection';
+import { EditProfileModal } from './EditProfileModal';
 import { CropComparePanel } from '@/components/auth/CropComparePanel';
 import type { CropEntry } from '@/types';
 import type { OnboardingResult } from '@/components/auth/OnboardingPage';
@@ -106,19 +107,26 @@ function SettingsRow({
 interface AccountPageProps {
   farmProfile?: OnboardingResult | null;
   userEmail?: string;
+  onUpdateProfile?: (updated: OnboardingResult) => void;
   onLogout?: () => void;
 }
 
-export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPageProps = {}) {
+export function AccountPage({
+  farmProfile,
+  userEmail = '',
+  onUpdateProfile,
+  onLogout,
+}: AccountPageProps = {}) {
   const { t, lang, toggleLang } = useLang();
   const [voiceOn, setVoiceOn] = useState(true);
   const [showCompare, setShowCompare] = useState(false);
-  const [crops, setCrops] = useState<CropEntry[]>(farmProfile?.crops || []);
+  const [editModalTab, setEditModalTab] = useState<'personal' | 'location' | 'crops' | 'soil' | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   const milestoneLabels = MILESTONES.map((k) => t(k));
   
   // Calculate completeness percentage based on active farm profile
-  const allCrops = farmProfile?.crops?.length ? farmProfile.crops : crops;
+  const allCrops = farmProfile?.crops?.length ? farmProfile.crops : [];
   const checks = [
     Boolean(farmProfile?.name),
     Boolean(farmProfile?.village || farmProfile?.district),
@@ -129,14 +137,50 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
   ];
   const completeness = farmProfile ? Math.round((checks.filter(Boolean).length / checks.length) * 100) : 0;
 
+  const handleSaveProfile = (updated: OnboardingResult) => {
+    if (onUpdateProfile) {
+      onUpdateProfile(updated);
+    }
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   const handleAddCropFromComparison = (crop: CropEntry) => {
-    setCrops((prev) => [...prev, crop]);
+    if (farmProfile && onUpdateProfile) {
+      const updatedCrops = [...(farmProfile.crops || []), crop];
+      onUpdateProfile({
+        ...farmProfile,
+        crops: updatedCrops,
+      });
+    }
     setShowCompare(false);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   return (
     <div className="px-4 py-5 lg:px-8 lg:py-7 max-w-5xl mx-auto">
-      <h1 className="text-2xl lg:text-3xl font-bold text-ink mb-5">{t('accountTitle')}</h1>
+      {/* Toast alert */}
+      {showToast && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2 bg-brand-700 text-white px-4 py-2.5 rounded-2xl shadow-xl animate-slide-down text-xs font-semibold">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>
+            {lang === 'mr' ? 'माहिती यशस्वीरीत्या अपडेट केली!' : 'Profile updated successfully!'}
+          </span>
+        </div>
+      )}
+
+      {/* Header with Edit Button */}
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-2xl lg:text-3xl font-bold text-ink">{t('accountTitle')}</h1>
+        <button
+          onClick={() => setEditModalTab('personal')}
+          className="flex items-center gap-1.5 text-xs font-bold text-brand-700 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3.5 py-2 rounded-xl transition-all shadow-xs"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          <span>{lang === 'mr' ? 'माहिती बदला (Edit)' : 'Edit Profile'}</span>
+        </button>
+      </div>
 
       {/* ── Milestoned progress bar ── */}
       <div className="card p-5 mb-6">
@@ -155,6 +199,7 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
         <div className="space-y-4">
           <ProfileSection
             title={t('personalInfo')}
+            onEdit={() => setEditModalTab('personal')}
             rows={[
               { label: t('name'), value: farmProfile?.name || '—' },
               { label: t('emailLabel') || 'Email', value: userEmail || '—' },
@@ -162,6 +207,7 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
           />
           <ProfileSection
             title={t('location')}
+            onEdit={() => setEditModalTab('personal')}
             rows={[
               { label: t('village'), value: farmProfile?.village || '—' },
               { label: t('district'), value: farmProfile?.district || '—' },
@@ -170,6 +216,7 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
           />
           <ProfileSection
             title={t('farmLand')}
+            onEdit={() => setEditModalTab('personal')}
             rows={[{
               label: t('area'),
               value: farmProfile?.acres ? `${farmProfile.acres} ${lang === 'mr' ? 'एकर' : 'acres'}` : '—'
@@ -180,7 +227,10 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
         {/* Right column */}
         <div className="space-y-4">
           {/* Current Crop card — multi-crop */}
-          <ProfileSectionWithChildren title={t('currentCrop')}>
+          <ProfileSectionWithChildren
+            title={t('currentCrop')}
+            onEdit={() => setEditModalTab('crops')}
+          >
             <div className="space-y-0">
               {allCrops.length === 0 ? (
                 <p className="text-sm text-muted py-2">—</p>
@@ -223,6 +273,7 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
 
           <ProfileSection
             title={t('soilIrrigation')}
+            onEdit={() => setEditModalTab('soil')}
             rows={[
               { label: t('soil'), value: farmProfile?.soil || '—' },
               { label: t('irrigation'), value: farmProfile?.irrigation || '—' },
@@ -255,14 +306,17 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
           </span>
           <button
             id="voice-toggle-btn"
+            type="button"
+            role="switch"
+            aria-checked={voiceOn}
             onClick={() => setVoiceOn((v) => !v)}
-            className={`relative h-6 w-11 rounded-full transition-colors ${
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
               voiceOn ? 'bg-brand-700' : 'bg-gray-200'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                voiceOn ? 'translate-x-6' : 'translate-x-1'
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                voiceOn ? 'translate-x-5' : 'translate-x-0'
               }`}
             />
           </button>
@@ -279,6 +333,17 @@ export function AccountPage({ farmProfile, userEmail = '', onLogout }: AccountPa
           {t('logout')}
         </button>
       </div>
+
+      {/* Edit Profile Modal */}
+      {editModalTab && (
+        <EditProfileModal
+          initialData={farmProfile}
+          userEmail={userEmail}
+          initialTab={editModalTab}
+          onSave={handleSaveProfile}
+          onClose={() => setEditModalTab(null)}
+        />
+      )}
 
       {/* Crop comparison panel */}
       {showCompare && (

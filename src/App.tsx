@@ -12,6 +12,7 @@ import {
   signUpWithEmail,
   signInWithEmail,
   signOutUser,
+  getCurrentUser,
   getProfileByUser,
   saveFarmerProfile,
   supabase,
@@ -116,6 +117,23 @@ function App() {
     setPage('today');
   }, []);
 
+  const handleUpdateProfile = useCallback(async (updated: OnboardingResult) => {
+    setFarmProfile(updated);
+    if (updated.name) {
+      setFarmerName(updated.name);
+    }
+    localStorage.setItem('shetkarihit_profile', JSON.stringify(updated));
+
+    try {
+      const user = await getCurrentUser();
+      const uid = user?.id || currentUserId || `usr_${Date.now()}`;
+      const uemail = user?.email || currentUserEmail || 'farmer@gmail.com';
+      await saveFarmerProfile(uid, uemail, updated);
+    } catch (err) {
+      console.warn('[Supabase] Update profile note:', err);
+    }
+  }, [currentUserId, currentUserEmail]);
+
   const handleLogout = useCallback(async () => {
     await signOutUser();
     localStorage.removeItem('shetkarihit_profile');
@@ -183,6 +201,7 @@ function App() {
           <AccountPage
             farmProfile={farmProfile}
             userEmail={currentUserEmail}
+            onUpdateProfile={handleUpdateProfile}
             onLogout={handleLogout}
           />
         )}
