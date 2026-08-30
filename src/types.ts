@@ -1,4 +1,5 @@
-export type Lang = 'mr' | 'en';
+export type Lang = 'mr' | 'hi' | 'en';
+
 
 export type Confidence = 'high' | 'medium' | 'low';
 

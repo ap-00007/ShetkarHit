@@ -1,6 +1,6 @@
-import { Sprout, Mic, ClipboardList, User, Globe, LogOut, X } from 'lucide-react';
+import { Sprout, Mic, ClipboardList, User, LogOut, X } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
-import { profile } from '@/data/mockData';
+import { LangSelector } from '@/components/shared/LangSelector';
 import type { OnboardingResult } from '@/components/auth/OnboardingPage';
 
 type Page = 'today' | 'ask' | 'schemes' | 'account';
@@ -24,10 +24,10 @@ export function SidebarNav({ current, onNavigate, farmProfile, isOpen = false, o
     { id: 'schemes' as const, label: t('navSchemes'), icon: ClipboardList },
   ];
 
-  const displayName = farmProfile?.name || profile.name;
+  const displayName = farmProfile?.name || '—';
   const displayLocation = farmProfile
     ? `${farmProfile.acres ? farmProfile.acres + ' एकर · ' : ''}${farmProfile.village || ''}`.trim()
-    : `${profile.village}, ${profile.state}`;
+    : '—';
 
   const handleNavigate = (p: Page) => {
     onNavigate(p);
@@ -92,13 +92,7 @@ export function SidebarNav({ current, onNavigate, farmProfile, isOpen = false, o
           <User style={{ width: '1.125rem', height: '1.125rem' }} className="shrink-0" />
           {t('navAccount')}
         </button>
-        <button
-          onClick={toggleLang}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-ink hover:bg-brand-50 transition-colors"
-        >
-          <Globe style={{ width: '1.125rem', height: '1.125rem' }} className="shrink-0" />
-          {lang === 'mr' ? 'English' : 'मराठी'}
-        </button>
+        <LangSelector variant="pills" className="w-full justify-center" />
         <button
           id="sidebar-logout-btn"
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-urgent hover:bg-urgent/5 transition-colors"

@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
-import { decision } from '@/data/mockData';
 
-export function WhyExpandable() {
+interface Props {
+  reason?: string;
+}
+
+export function WhyExpandable({ reason }: Props) {
   const { t } = useLang();
   const [open, setOpen] = useState(false);
+
+  if (!reason) return null;
 
   return (
     <div className="card p-4">
@@ -20,7 +25,7 @@ export function WhyExpandable() {
       </button>
       {open && (
         <p className="mt-3 text-sm text-muted leading-relaxed animate-fade-in">
-          {decision.reason}
+          {reason}
         </p>
       )}
     </div>

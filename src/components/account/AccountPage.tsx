@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Globe, LogOut, Mic, Plus, ChevronRight } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
-import { profile } from '@/data/mockData';
 import { ProfileSection, ProfileSectionWithChildren } from './ProfileSection';
 import { CropComparePanel } from '@/components/auth/CropComparePanel';
 import type { CropEntry } from '@/types';
@@ -108,9 +107,10 @@ export function AccountPage() {
   const { t, lang, toggleLang } = useLang();
   const [voiceOn, setVoiceOn] = useState(true);
   const [showCompare, setShowCompare] = useState(false);
-  const [crops, setCrops] = useState<CropEntry[]>(profile.crops);
+  const [crops, setCrops] = useState<CropEntry[]>([]);
 
   const milestoneLabels = MILESTONES.map((k) => t(k));
+  const completeness = 0;
 
   const handleAddCropFromComparison = (crop: CropEntry) => {
     setCrops((prev) => [...prev, crop]);
@@ -126,10 +126,10 @@ export function AccountPage() {
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold text-ink">
             {t('profileComplete')} —{' '}
-            <span className="text-brand-700">{profile.completeness}% {t('complete')}</span>
+            <span className="text-brand-700">{completeness}% {t('complete')}</span>
           </span>
         </div>
-        <MilestonedBar pct={profile.completeness} labels={milestoneLabels} />
+        <MilestonedBar pct={completeness} labels={milestoneLabels} />
       </div>
 
       {/* ── Profile sections: two-column on lg, single column below ── */}
@@ -139,21 +139,21 @@ export function AccountPage() {
           <ProfileSection
             title={t('personalInfo')}
             rows={[
-              { label: t('name'), value: profile.name },
-              { label: t('mobile'), value: profile.mobile },
+              { label: t('name'), value: '—' },
+              { label: t('mobile'), value: '—' },
             ]}
           />
           <ProfileSection
             title={t('location')}
             rows={[
-              { label: t('village'), value: profile.village },
-              { label: t('district'), value: profile.district },
-              { label: t('state'), value: profile.state },
+              { label: t('village'), value: '—' },
+              { label: t('district'), value: '—' },
+              { label: t('state'), value: '—' },
             ]}
           />
           <ProfileSection
             title={t('farmLand')}
-            rows={[{ label: t('area'), value: profile.area }]}
+            rows={[{ label: t('area'), value: '—' }]}
           />
         </div>
 
@@ -162,27 +162,31 @@ export function AccountPage() {
           {/* Current Crop card — multi-crop */}
           <ProfileSectionWithChildren title={t('currentCrop')}>
             <div className="space-y-0">
-              {crops.map((crop, i) => (
-                <div
-                  key={i}
-                  className={`py-3 ${i < crops.length - 1 ? 'border-b border-ochre-50' : ''}`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-ink">{crop.name || '—'}</p>
-                      {crop.variety && (
-                        <p className="text-xs text-muted">{t('variety')}: {crop.variety}</p>
-                      )}
-                      {crop.sowingDate && (
-                        <p className="text-xs text-muted">{t('sowingDate')}: {crop.sowingDate}</p>
-                      )}
+              {crops.length === 0 ? (
+                <p className="text-sm text-muted py-2">—</p>
+              ) : (
+                crops.map((crop, i) => (
+                  <div
+                    key={i}
+                    className={`py-3 ${i < crops.length - 1 ? 'border-b border-ochre-50' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-ink">{crop.name || '—'}</p>
+                        {crop.variety && (
+                          <p className="text-xs text-muted">{t('variety')}: {crop.variety}</p>
+                        )}
+                        {crop.sowingDate && (
+                          <p className="text-xs text-muted">{t('sowingDate')}: {crop.sowingDate}</p>
+                        )}
+                      </div>
+                      <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full shrink-0">
+                        {lang === 'mr' ? `पीक ${i + 1}` : `Crop ${i + 1}`}
+                      </span>
                     </div>
-                    <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full shrink-0">
-                      {lang === 'mr' ? `पीक ${i + 1}` : `Crop ${i + 1}`}
-                    </span>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             {/* Add another crop */}
             <div className="mt-3 space-y-2">
@@ -200,9 +204,9 @@ export function AccountPage() {
           <ProfileSection
             title={t('soilIrrigation')}
             rows={[
-              { label: t('soil'), value: profile.soil },
-              { label: t('irrigation'), value: profile.irrigation },
-              { label: t('waterSource'), value: profile.waterSource },
+              { label: t('soil'), value: '—' },
+              { label: t('irrigation'), value: '—' },
+              { label: t('waterSource'), value: '—' },
             ]}
           />
 
@@ -242,7 +246,7 @@ export function AccountPage() {
             id="voice-toggle-btn"
             onClick={() => setVoiceOn((v) => !v)}
             className={`relative h-6 w-11 rounded-full transition-colors ${
-              voiceOn ? 'bg-brand-700' : 'bg-ochre-200'
+              voiceOn ? 'bg-brand-700' : 'bg-gray-200'
             }`}
             aria-pressed={voiceOn}
             role="switch"

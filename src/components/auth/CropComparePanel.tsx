@@ -1,6 +1,5 @@
 import { X, TrendingUp, TrendingDown, Minus, Droplets, Clock, TrendingUpIcon } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
-import { cropCandidates } from '@/data/mockData';
 import type { CropCandidate, CropEntry } from '@/types';
 
 interface Props {
@@ -26,6 +25,9 @@ function TrendBadge({ trend, note, lang }: { trend: CropCandidate['priceTrend'];
 
 export function CropComparePanel({ onSelect, onClose }: Props) {
   const { lang, t } = useLang();
+
+  // No static crop candidates — populated from real API
+  const cropCandidates: CropCandidate[] = [];
 
   const handleSelect = (c: CropCandidate) => {
     onSelect({
@@ -67,74 +69,82 @@ export function CropComparePanel({ onSelect, onClose }: Props) {
           </button>
         </div>
 
-        {/* Horizontally scrollable cards */}
+        {/* Content */}
         <div className="overflow-y-auto flex-1 p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {cropCandidates.map((c) => (
-              <div
-                key={c.id}
-                className="card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
-              >
-                {/* Crop header */}
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{c.emoji}</span>
-                  <div>
-                    <p className="font-bold text-ink leading-tight">
-                      {lang === 'mr' ? c.nameMr : c.nameEn}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {lang === 'mr' ? c.nameEn : c.nameMr}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stats grid */}
-                <div className="space-y-2 text-sm">
-                  {/* Profit */}
-                  <div className="flex items-start gap-2">
-                    <TrendingUpIcon className="h-3.5 w-3.5 text-positive mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-muted leading-none mb-0.5">{t('profitRange')}</p>
-                      <p className="font-semibold text-positive text-xs leading-tight">{c.profitRange}</p>
-                    </div>
-                  </div>
-
-                  {/* Water */}
-                  <div className="flex items-start gap-2">
-                    <Droplets className="h-3.5 w-3.5 text-brand-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-muted leading-none mb-0.5">{t('waterReq')}</p>
-                      <p className="font-medium text-ink text-xs leading-tight">{c.waterReq}</p>
-                    </div>
-                  </div>
-
-                  {/* Duration */}
-                  <div className="flex items-start gap-2">
-                    <Clock className="h-3.5 w-3.5 text-ochre-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-muted leading-none mb-0.5">{t('duration')}</p>
-                      <p className="font-medium text-ink text-xs leading-tight">{c.duration}</p>
-                    </div>
-                  </div>
-
-                  {/* Price trend */}
-                  <div>
-                    <p className="text-xs text-muted mb-1">{t('priceTrend')}</p>
-                    <TrendBadge trend={c.priceTrend} note={c.priceNote} lang={lang} />
-                  </div>
-                </div>
-
-                {/* Select CTA */}
-                <button
-                  id={`select-crop-${c.id}`}
-                  onClick={() => handleSelect(c)}
-                  className="mt-auto btn-primary w-full py-2.5 text-sm"
+          {cropCandidates.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {cropCandidates.map((c) => (
+                <div
+                  key={c.id}
+                  className="card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
                 >
-                  {t('selectThisCrop')}
-                </button>
-              </div>
-            ))}
-          </div>
+                  {/* Crop header */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{c.emoji}</span>
+                    <div>
+                      <p className="font-bold text-ink leading-tight">
+                        {lang === 'mr' ? c.nameMr : c.nameEn}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {lang === 'mr' ? c.nameEn : c.nameMr}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Stats grid */}
+                  <div className="space-y-2 text-sm">
+                    {/* Profit */}
+                    <div className="flex items-start gap-2">
+                      <TrendingUpIcon className="h-3.5 w-3.5 text-positive mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted leading-none mb-0.5">{t('profitRange')}</p>
+                        <p className="font-semibold text-positive text-xs leading-tight">{c.profitRange}</p>
+                      </div>
+                    </div>
+
+                    {/* Water */}
+                    <div className="flex items-start gap-2">
+                      <Droplets className="h-3.5 w-3.5 text-brand-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted leading-none mb-0.5">{t('waterReq')}</p>
+                        <p className="font-medium text-ink text-xs leading-tight">{c.waterReq}</p>
+                      </div>
+                    </div>
+
+                    {/* Duration */}
+                    <div className="flex items-start gap-2">
+                      <Clock className="h-3.5 w-3.5 text-ochre-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted leading-none mb-0.5">{t('duration')}</p>
+                        <p className="font-medium text-ink text-xs leading-tight">{c.duration}</p>
+                      </div>
+                    </div>
+
+                    {/* Price trend */}
+                    <div>
+                      <p className="text-xs text-muted mb-1">{t('priceTrend')}</p>
+                      <TrendBadge trend={c.priceTrend} note={c.priceNote} lang={lang} />
+                    </div>
+                  </div>
+
+                  {/* Select CTA */}
+                  <button
+                    id={`select-crop-${c.id}`}
+                    onClick={() => handleSelect(c)}
+                    className="mt-auto btn-primary w-full py-2.5 text-sm"
+                  >
+                    {t('selectThisCrop')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-muted text-sm">
+                {lang === 'mr' ? 'पीक तुलना डेटा उपलब्ध नाही.' : 'Crop comparison data not available yet.'}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

@@ -1,7 +1,6 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
-import { profitOutlook, marketPrices } from '@/data/mockData';
-import type { MarketPrice } from '@/types';
+import type { MarketPrice, ProfitOutlook } from '@/types';
 
 const statusConfig = {
   positive: { bg: 'bg-positive/10', text: 'text-positive', icon: TrendingUp },
@@ -15,8 +14,15 @@ const trendIcons: Record<MarketPrice['trend'], { icon: typeof TrendingUp; color:
   stable: { icon: Minus, color: 'text-muted' },
 };
 
-export function ProfitOutlook() {
+interface ProfitOutlookProps {
+  profitOutlook?: ProfitOutlook | null;
+}
+
+export function ProfitOutlook({ profitOutlook }: ProfitOutlookProps) {
   const { t } = useLang();
+
+  if (!profitOutlook) return null;
+
   const cfg = statusConfig[profitOutlook.status];
   const Icon = cfg.icon;
 
@@ -35,8 +41,14 @@ export function ProfitOutlook() {
   );
 }
 
-export function MarketSnapshot() {
+interface MarketSnapshotProps {
+  marketPrices?: MarketPrice[];
+}
+
+export function MarketSnapshot({ marketPrices = [] }: MarketSnapshotProps) {
   const { t } = useLang();
+
+  if (marketPrices.length === 0) return null;
 
   return (
     <div className="card p-4">

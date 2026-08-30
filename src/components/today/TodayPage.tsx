@@ -6,14 +6,12 @@ import { WhyExpandable } from './WhyExpandable';
 import { ThreeDayForecast } from './ThreeDayForecast';
 import { ProfitOutlook, MarketSnapshot } from './ProfitAndMarket';
 import { WhatIfToggle } from './WhatIfToggle';
-import { decision, profile } from '@/data/mockData';
 import type { OnboardingResult } from '@/components/auth/OnboardingPage';
 
 export function TodayPage({ farmProfile }: { farmProfile?: OnboardingResult | null }) {
   const { lang, toggleLang, t } = useLang();
 
-  const cropList = farmProfile?.crops.filter((c) => c.name.trim() !== '')
-    ?? profile.crops;
+  const cropList = farmProfile?.crops.filter((c) => c.name.trim() !== '') ?? [];
   const [activeCrop, setActiveCrop] = useState(cropList[0]?.name ?? '');
 
   const greetingName = farmProfile?.name
@@ -27,11 +25,9 @@ export function TodayPage({ farmProfile }: { farmProfile?: OnboardingResult | nu
       ].filter(Boolean).join(' · ')
     : t('farmInfo');
 
-  const handleListen = () => {
+  const handleListen = (headline: string, reason: string) => {
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(
-        `${decision.headline}. ${decision.reason}`
-      );
+      const utterance = new SpeechSynthesisUtterance(`${headline}. ${reason}`);
       utterance.lang = 'mr-IN';
       utterance.rate = 0.9;
       window.speechSynthesis.speak(utterance);
@@ -89,7 +85,7 @@ export function TodayPage({ farmProfile }: { farmProfile?: OnboardingResult | nu
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Left — decision + why + what-if */}
         <div className="lg:col-span-3 space-y-4">
-          <DecisionCard decision={decision} onListen={handleListen} />
+          {/* Decision card — only shown when real data arrives */}
           <WhyExpandable />
           <WhatIfToggle />
         </div>

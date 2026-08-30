@@ -2,7 +2,6 @@ import { Volume2, Droplet, Sun, Bug, IndianRupee, Sprout } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
 import { ConfidenceBadge } from '@/components/shared/ConfidenceBadge';
-import { decision as decisionData } from '@/data/mockData';
 import type { Decision } from '@/types';
 
 const urgencyConfig: Record<
@@ -69,5 +68,3 @@ export function DecisionCard({ decision, onListen }: Props) {
     </div>
   );
 }
-
-export { decisionData };

@@ -1,6 +1,5 @@
 import { CloudRain, Cloud } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
-import { forecast } from '@/data/mockData';
 import type { ForecastDay } from '@/types';
 
 const urgencyColors: Record<ForecastDay['urgency'], string> = {
@@ -14,8 +13,14 @@ const iconMap: Record<string, typeof CloudRain> = {
   cloud: Cloud,
 };
 
-export function ThreeDayForecast() {
+interface Props {
+  forecast?: ForecastDay[];
+}
+
+export function ThreeDayForecast({ forecast = [] }: Props) {
   const { t } = useLang();
+
+  if (forecast.length === 0) return null;
 
   return (
     <div className="card p-4">

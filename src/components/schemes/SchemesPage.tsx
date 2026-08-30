@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Search, ChevronDown, Award, Filter } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
-import { schemes as allSchemes } from '@/data/mockData';
 import type { Scheme } from '@/types';
 
 const relevanceConfig: Record<
@@ -80,6 +79,9 @@ export function SchemesPage() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'high' | 'medium'>('all');
 
+  // No static schemes — will be populated from real API
+  const allSchemes: Scheme[] = [];
+
   const filtered = allSchemes.filter((s) => {
     const matchesQuery =
       !query ||
@@ -141,14 +143,16 @@ export function SchemesPage() {
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="text-muted text-sm">
-            {lang === 'mr' ? 'कोणतीही योजना सापडली नाही.' : 'No schemes found.'}
+            {lang === 'mr' ? 'कोणतीही योजना उपलब्ध नाही.' : 'No schemes available yet.'}
           </p>
-          <button
-            onClick={() => { setQuery(''); setFilter('all'); }}
-            className="mt-3 text-sm font-semibold text-brand-700 hover:underline"
-          >
-            {lang === 'mr' ? 'सर्व पाहा' : 'View all'}
-          </button>
+          {query || filter !== 'all' ? (
+            <button
+              onClick={() => { setQuery(''); setFilter('all'); }}
+              className="mt-3 text-sm font-semibold text-brand-700 hover:underline"
+            >
+              {lang === 'mr' ? 'सर्व पाहा' : 'View all'}
+            </button>
+          ) : null}
         </div>
       )}
     </div>

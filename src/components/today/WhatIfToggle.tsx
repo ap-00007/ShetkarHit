@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useLang } from '@/context/LangContext';
-import { whatIfToggles as initialToggles } from '@/data/mockData';
 import type { WhatIfToggle } from '@/types';
 
 export function WhatIfToggle() {
   const { t } = useLang();
-  const [toggles, setToggles] = useState<WhatIfToggle[]>(initialToggles);
+  const [toggles, setToggles] = useState<WhatIfToggle[]>([]);
   const [changedImpact, setChangedImpact] = useState<string | null>(null);
+
+  if (toggles.length === 0) return null;
 
   const handleToggle = (id: string) => {
     setToggles((prev) =>
@@ -35,7 +36,7 @@ export function WhatIfToggle() {
               <button
                 onClick={() => handleToggle(tg.id)}
                 className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-                  tg.enabled ? 'bg-brand-700' : 'bg-ochre-200'
+                  tg.enabled ? 'bg-brand-700' : 'bg-gray-200'
                 }`}
                 aria-pressed={tg.enabled}
               >
