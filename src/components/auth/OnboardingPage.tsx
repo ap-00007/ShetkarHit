@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLang } from '@/context/LangContext';
 import {
   Sprout, User, MapPin, Tractor, Wheat, Droplets, ClipboardCheck,
-  ChevronRight, ChevronLeft, Plus, X, Scale,
+  ChevronRight, ChevronLeft, Plus, X, Scale, AlertCircle,
 } from 'lucide-react';
 import { FarmIllustration } from './FarmIllustration';
 import { CropComparePanel } from './CropComparePanel';
@@ -190,7 +190,7 @@ function CropRow({
 }
 
 /* ═══════════════════════════════════════════
-   Main component
+   Main component with Validators
 ═══════════════════════════════════════════ */
 interface Props {
   onDone: (data: OnboardingResult) => void;
@@ -207,31 +207,58 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
   // Form state
   const [name, setName] = useState('');
   const [village, setVillage] = useState('');
-  const [district, setDistrict] = useState('');
-  const [state, setState] = useState('');
+  const [district, setDistrict] = useState('Ahmednagar');
+  const [state, setState] = useState('Maharashtra');
   const [acres, setAcres] = useState('');
   const [crops, setCrops] = useState<CropEntry[]>([{ name: '', variety: '', sowingDate: '' }]);
   const [soil, setSoil] = useState('');
   const [irrigation, setIrrigation] = useState('');
   const [waterSource, setWaterSource] = useState('');
 
+  // Touched state for error feedback
+  const [touchedSteps, setTouchedSteps] = useState<Record<number, boolean>>({});
+
   const stepLabels = STEP_LABELS.map((k) => t(k));
   const stepIcons = [User, MapPin, Tractor, Wheat, Droplets, ClipboardCheck];
   const StepIcon = stepIcons[step];
 
+  // ── Step Validators ──
+  const isNameValid = name.trim().length >= 2 && /^[a-zA-Z\u0900-\u097F\s.'-]+$/.test(name.trim());
+  const isVillageValid = village.trim().length >= 2;
+  const isDistrictValid = district.trim().length >= 2;
+  const isLocationValid = isVillageValid && isDistrictValid;
+  const acresNum = parseFloat(acres);
+  const isAcresValid = !isNaN(acresNum) && acresNum > 0 && acresNum <= 500;
+  const isCropValid = crops.some((c) => c.name.trim().length >= 2);
+  const isSoilValid = soil !== '' && irrigation !== '' && waterSource !== '';
+
   const canProceed = (() => {
-    if (step === 0) return name.trim() !== '';
-    if (step === 1) return village.trim() !== '';
-    if (step === 2) return acres.trim() !== '';
-    if (step === 3) return crops.some((c) => c.name.trim() !== '');
-    if (step === 4) return soil !== '' && irrigation !== '' && waterSource !== '';
-    return true; // review step always enabled
+    if (step === 0) return isNameValid;
+    if (step === 1) return isLocationValid;
+    if (step === 2) return isAcresValid;
+    if (step === 3) return isCropValid;
+    if (step === 4) return isSoilValid;
+    return true; // review step
   })();
 
   const handleNext = () => {
-    if (step < TOTAL_STEPS - 1) setStep((s) => s + 1);
-    else {
-      onDone({ name, village, district, state, acres, crops, soil, irrigation, waterSource });
+    setTouchedSteps((prev) => ({ ...prev, [step]: true }));
+    if (!canProceed) return;
+
+    if (step < TOTAL_STEPS - 1) {
+      setStep((s) => s + 1);
+    } else {
+      onDone({
+        name: name.trim(),
+        village: village.trim(),
+        district: district.trim(),
+        state: state.trim() || 'Maharashtra',
+        acres: acres.trim(),
+        crops: crops.filter((c) => c.name.trim() !== ''),
+        soil,
+        irrigation,
+        waterSource,
+      });
     }
   };
 
@@ -244,7 +271,6 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
   const addCrop = () => setCrops((prev) => [...prev, { name: '', variety: '', sowingDate: '' }]);
   const removeCrop = (i: number) => setCrops((prev) => prev.filter((_, idx) => idx !== i));
   const addFromComparison = (crop: CropEntry) => {
-    // Fill the first empty crop slot, or append
     const emptyIdx = crops.findIndex((c) => c.name.trim() === '');
     if (emptyIdx >= 0) {
       updateCrop(emptyIdx, 'name', crop.name);
@@ -272,7 +298,9 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                 <StepIcon className="h-5 w-5 text-brand-700" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted">{`${t('stepPersonal').split('')[0]}${step + 1} / ${TOTAL_STEPS}`}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  {lang === 'mr' ? `टप्पा ${step + 1} / ${TOTAL_STEPS}` : `Step ${step + 1} of ${TOTAL_STEPS}`}
+                </p>
                 <h2 className="text-lg font-bold text-ink leading-tight">{stepLabels[step]}</h2>
               </div>
             </div>
@@ -287,9 +315,15 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={lang === 'mr' ? 'उदा. रवी पाटील' : 'e.g. Ravi Patil'}
-                  className="input-field"
+                  className={`input-field ${name.length > 0 && !isNameValid ? 'border-urgent focus:ring-urgent/30' : ''}`}
                   autoFocus
                 />
+                {name.length > 0 && !isNameValid && (
+                  <p className="mt-1.5 text-xs text-urgent flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {lang === 'mr' ? 'कृपया पूर्ण नाव प्रविष्ट करा (किमान २ अक्षरे).' : 'Please enter a valid full name (at least 2 letters).'}
+                  </p>
+                )}
               </div>
             )}
 
@@ -304,9 +338,14 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                     value={village}
                     onChange={(e) => setVillage(e.target.value)}
                     placeholder={lang === 'mr' ? 'उदा. कोपरगाव' : 'e.g. Kopargaon'}
-                    className="input-field"
+                    className={`input-field ${village.length > 0 && !isVillageValid ? 'border-urgent' : ''}`}
                     autoFocus
                   />
+                  {village.length > 0 && !isVillageValid && (
+                    <p className="mt-1 text-xs text-urgent">
+                      {lang === 'mr' ? 'गावाचे नाव आवश्यक आहे.' : 'Village name is required.'}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">{t('districtLabel')}</label>
@@ -316,8 +355,13 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
                     placeholder={lang === 'mr' ? 'उदा. अहमदनगर' : 'e.g. Ahmednagar'}
-                    className="input-field"
+                    className={`input-field ${district.length > 0 && !isDistrictValid ? 'border-urgent' : ''}`}
                   />
+                  {district.length > 0 && !isDistrictValid && (
+                    <p className="mt-1 text-xs text-urgent">
+                      {lang === 'mr' ? 'जिल्ह्याचे नाव आवश्यक आहे.' : 'District name is required.'}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">{t('stateLabel')}</label>
@@ -342,12 +386,13 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                     <input
                       id="onboard-acres"
                       type="number"
-                      min="0"
+                      min="0.1"
+                      max="500"
                       step="0.5"
                       value={acres}
                       onChange={(e) => setAcres(e.target.value)}
                       placeholder={lang === 'mr' ? 'उदा. ४' : 'e.g. 4'}
-                      className="input-field pr-16"
+                      className={`input-field pr-16 ${acres.length > 0 && !isAcresValid ? 'border-urgent focus:ring-urgent/30' : ''}`}
                       inputMode="decimal"
                       autoFocus
                     />
@@ -355,11 +400,18 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                       {lang === 'mr' ? 'एकर' : 'acres'}
                     </span>
                   </div>
+                  {acres.length > 0 && !isAcresValid && (
+                    <p className="mt-1.5 text-xs text-urgent flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {lang === 'mr' ? 'कृपया ०.१ ते ५०० दरम्यान एकर संख्या टाका.' : 'Please enter a valid acreage between 0.1 and 500.'}
+                    </p>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 pt-1">
                   {['1', '2', '3', '4', '5', '10', '15', '20'].map((v) => (
                     <button
                       key={v}
+                      type="button"
                       onClick={() => setAcres(v)}
                       className={`chip text-sm ${acres === v ? 'chip-active' : 'chip-inactive'}`}
                     >
@@ -373,9 +425,9 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
             {/* ── STEP 4: Current Crop ── */}
             {step === 3 && (
               <div className="space-y-3">
-                {/* Compare button */}
                 <button
                   id="open-compare-btn"
+                  type="button"
                   onClick={() => setShowCompare(true)}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-brand-200 bg-brand-50 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-100 hover:border-brand-400 transition-all"
                 >
@@ -403,9 +455,17 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                   ))}
                 </div>
 
+                {touchedSteps[3] && !isCropValid && (
+                  <p className="text-xs text-urgent flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {lang === 'mr' ? 'कृपया किमान एका पिकाचे नाव टाका.' : 'Please enter at least one crop name.'}
+                  </p>
+                )}
+
                 {/* Add another crop */}
                 <button
                   id="add-another-crop-btn"
+                  type="button"
                   onClick={addCrop}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ochre-200 py-2.5 text-sm font-medium text-muted hover:border-brand-400 hover:text-brand-700 transition-colors"
                 >
@@ -421,14 +481,23 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-2">{t('soil')}</label>
                   <ChipGroup options={soilOptions} value={soil} onChange={setSoil} />
+                  {!soil && touchedSteps[4] && (
+                    <p className="mt-1 text-xs text-urgent">{lang === 'mr' ? 'जमिनीचा प्रकार निवडा.' : 'Please select soil type.'}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-2">{t('irrigation')}</label>
                   <ChipGroup options={irrOptions} value={irrigation} onChange={setIrrigation} />
+                  {!irrigation && touchedSteps[4] && (
+                    <p className="mt-1 text-xs text-urgent">{lang === 'mr' ? 'सिंचन पद्धत निवडा.' : 'Please select irrigation method.'}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-2">{t('waterSource')}</label>
                   <ChipGroup options={srcOptions} value={waterSource} onChange={setWaterSource} />
+                  {!waterSource && touchedSteps[4] && (
+                    <p className="mt-1 text-xs text-urgent">{lang === 'mr' ? 'पाणी स्त्रोत निवडा.' : 'Please select water source.'}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -473,6 +542,7 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
               {step > 0 && (
                 <button
                   id="onboard-back-btn"
+                  type="button"
                   onClick={handleBack}
                   className="flex items-center gap-1.5 btn-secondary px-5 py-3"
                 >
@@ -482,6 +552,7 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
               )}
               <button
                 id={step === TOTAL_STEPS - 1 ? 'onboard-confirm-btn' : 'onboard-next-btn'}
+                type="button"
                 onClick={handleNext}
                 disabled={!canProceed}
                 className={`flex-1 btn-primary py-3 flex items-center justify-center gap-2 shadow-sm transition-all ${
@@ -496,6 +567,7 @@ export function OnboardingPage({ onDone, onSkip }: Props) {
             {/* Skip link */}
             <button
               id="onboard-skip-btn"
+              type="button"
               onClick={onSkip}
               className="mt-3 w-full text-center text-xs text-muted hover:text-ink transition-colors py-1"
             >

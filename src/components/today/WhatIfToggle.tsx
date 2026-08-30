@@ -1,13 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLang } from '@/context/LangContext';
 import type { WhatIfToggle } from '@/types';
 
-export function WhatIfToggle() {
-  const { t } = useLang();
-  const [toggles, setToggles] = useState<WhatIfToggle[]>([]);
-  const [changedImpact, setChangedImpact] = useState<string | null>(null);
+interface Props {
+  toggles?: WhatIfToggle[];
+}
 
-  if (toggles.length === 0) return null;
+export function WhatIfToggle({ toggles: initialToggles = [] }: Props) {
+  const { t } = useLang();
+  const [toggles, setToggles] = useState<WhatIfToggle[]>(initialToggles);
+  const [, setChangedImpact] = useState<string | null>(null);
+
+  useEffect(() => {
+    setToggles(initialToggles);
+  }, [initialToggles]);
+
+  if (!toggles || toggles.length === 0) return null;
 
   const handleToggle = (id: string) => {
     setToggles((prev) =>

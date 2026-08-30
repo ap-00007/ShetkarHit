@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Bell, Globe } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, Globe, Loader2 } from 'lucide-react';
 import { useLang } from '@/context/LangContext';
 import { DecisionCard } from './DecisionCard';
 import { WhyExpandable } from './WhyExpandable';
@@ -7,12 +7,70 @@ import { ThreeDayForecast } from './ThreeDayForecast';
 import { ProfitOutlook, MarketSnapshot } from './ProfitAndMarket';
 import { WhatIfToggle } from './WhatIfToggle';
 import type { OnboardingResult } from '@/components/auth/OnboardingPage';
+import type { Decision, ForecastDay, MarketPrice, ProfitOutlook as ProfitOutlookType, WhatIfToggle as WhatIfToggleType } from '@/types';
+
+interface TodayApiResponse {
+  decision: Decision;
+  whatIfs: WhatIfToggleType[];
+  forecast: ForecastDay[];
+  profitOutlook: ProfitOutlookType;
+  marketPrices: MarketPrice[];
+}
 
 export function TodayPage({ farmProfile }: { farmProfile?: OnboardingResult | null }) {
   const { lang, toggleLang, t } = useLang();
 
   const cropList = farmProfile?.crops.filter((c) => c.name.trim() !== '') ?? [];
   const [activeCrop, setActiveCrop] = useState(cropList[0]?.name ?? '');
+  const [data, setData] = useState<TodayApiResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Sync activeCrop if cropList changes
+  useEffect(() => {
+    if (cropList[0]?.name && !activeCrop) {
+      setActiveCrop(cropList[0].name);
+    }
+  }, [cropList, activeCrop]);
+
+  // Fetch live advisory data on profile, crop, or language change
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    fetch('/api/today', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        farmProfile: farmProfile || {
+          name: 'शेतकरी मित्र',
+          village: 'Kopargaon',
+          district: 'Ahmednagar',
+          acres: '4',
+          crops: [{ name: activeCrop || 'Onion' }],
+        },
+        lang,
+        activeCrop: activeCrop || cropList[0]?.name,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch today data');
+        return res.json();
+      })
+      .then((json: TodayApiResponse) => {
+        if (!cancelled) {
+          setData(json);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('[TodayPage]', err);
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [farmProfile, lang, activeCrop]);
 
   const greetingName = farmProfile?.name
     ? (lang === 'mr' ? `नमस्कार, ${farmProfile.name} 👋` : `Hello, ${farmProfile.name} 👋`)
@@ -25,10 +83,10 @@ export function TodayPage({ farmProfile }: { farmProfile?: OnboardingResult | nu
       ].filter(Boolean).join(' · ')
     : t('farmInfo');
 
-  const handleListen = (headline: string, reason: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(`${headline}. ${reason}`);
-      utterance.lang = 'mr-IN';
+  const handleListen = () => {
+    if (data?.decision && 'speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(`${data.decision.headline}. ${data.decision.reason}`);
+      utterance.lang = lang === 'en' ? 'en-IN' : lang === 'hi' ? 'hi-IN' : 'mr-IN';
       utterance.rate = 0.9;
       window.speechSynthesis.speak(utterance);
     }
@@ -81,22 +139,46 @@ export function TodayPage({ farmProfile }: { farmProfile?: OnboardingResult | nu
         </div>
       )}
 
-      {/* ── Two-column layout ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Left — decision + why + what-if */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Decision card — only shown when real data arrives */}
-          <WhyExpandable />
-          <WhatIfToggle />
+      {/* Loading Skeleton */}
+      {loading && !data && (
+        <div className="flex flex-col items-center justify-center py-20 text-muted gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-700" />
+          <p className="text-sm font-medium">
+            {lang === 'mr' ? 'हवामान व सल्ला माहिती आणत आहे...' : lang === 'hi' ? 'मौसम व सलाह जानकारी लोड हो रही है...' : 'Fetching live weather & advisory...'}
+          </p>
         </div>
+      )}
 
-        {/* Right — forecast + profit + market */}
-        <div className="lg:col-span-2 space-y-4">
-          <ThreeDayForecast />
-          <ProfitOutlook />
-          <MarketSnapshot />
+      {/* ── Two-column layout ── */}
+      {data && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 animate-fade-in">
+          {/* Left — decision + why + what-if */}
+          <div className="lg:col-span-3 space-y-4">
+            {data.decision && (
+              <DecisionCard decision={data.decision} onListen={handleListen} />
+            )}
+            {data.decision?.reason && (
+              <WhyExpandable reason={data.decision.reason} />
+            )}
+            {data.whatIfs && (
+              <WhatIfToggle toggles={data.whatIfs} />
+            )}
+          </div>
+
+          {/* Right — forecast + profit + market */}
+          <div className="lg:col-span-2 space-y-4">
+            {data.forecast && (
+              <ThreeDayForecast forecast={data.forecast} />
+            )}
+            {data.profitOutlook && (
+              <ProfitOutlook profitOutlook={data.profitOutlook} />
+            )}
+            {data.marketPrices && (
+              <MarketSnapshot marketPrices={data.marketPrices} />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

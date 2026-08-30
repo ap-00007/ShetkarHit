@@ -35,12 +35,19 @@ export interface MarketPrice {
   change: string;
 }
 
+export interface SchemeEligibility {
+  status: 'eligible' | 'high_subsidy' | 'free_service' | 'check_criteria';
+  badge: string;
+  reason: string;
+}
+
 export interface Scheme {
   id: string;
   name: string;
   summary: string;
   relevance: 'high' | 'medium' | 'low';
   detail: string;
+  eligibility?: SchemeEligibility;
 }
 
 export interface ChatMessage {

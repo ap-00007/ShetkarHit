@@ -124,7 +124,7 @@ function App() {
       <WebShell current={page} onNavigate={setPage} farmProfile={farmProfile}>
         {page === 'today' && <TodayPage farmProfile={farmProfile} />}
         {page === 'ask' && <AskPage farmContext={(farmProfile ?? {}) as Record<string, unknown>} />}
-        {page === 'schemes' && <SchemesPage />}
+        {page === 'schemes' && <SchemesPage farmProfile={farmProfile} />}
         {page === 'account' && <AccountPage />}
 
       </WebShell>

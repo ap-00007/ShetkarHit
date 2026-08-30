@@ -111,7 +111,25 @@ interface MobileFormProps {
 }
 
 function MobileForm({ mobile, setMobile, onSubmit, btnLabel }: MobileFormProps) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const [touched, setTouched] = useState(false);
+
+  const cleanDigits = mobile.replace(/\D/g, '');
+  const isValid = cleanDigits.length === 10 && /^[6-9]/.test(cleanDigits);
+  const showError = touched && cleanDigits.length > 0 && !isValid;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setMobile(raw);
+    if (!touched) setTouched(true);
+  };
+
+  const handleFormSubmit = () => {
+    setTouched(true);
+    if (isValid) {
+      onSubmit();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -120,29 +138,43 @@ function MobileForm({ mobile, setMobile, onSubmit, btnLabel }: MobileFormProps) 
           {t('mobileLabel')}
         </label>
         <div className="relative">
-          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted text-sm font-medium select-none pointer-events-none">
+            <Phone className="h-4 w-4" />
+            <span>+91</span>
+          </div>
           <input
             id="mobile-input"
             type="tel"
             value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-            placeholder={t('mobilePlaceholder')}
-            className="input-field pl-10"
-            inputMode="tel"
-            maxLength={14}
+            onChange={handleChange}
+            onBlur={() => setTouched(true)}
+            placeholder={lang === 'mr' ? '९८७६५ ४३२१०' : lang === 'hi' ? '९८७६५ ४३२१०' : '98765 43210'}
+            className={`input-field pl-16 ${showError ? 'border-urgent focus:ring-urgent/30' : ''}`}
+            inputMode="numeric"
+            maxLength={10}
           />
         </div>
-        <p className="mt-1.5 text-xs text-muted">
-          {t('otpNote')}
-        </p>
+        {showError ? (
+          <p className="mt-1.5 text-xs text-urgent font-medium animate-fade-in">
+            {lang === 'mr'
+              ? 'कृपया अचूक १० अंकी भारतीय मोबाईल क्रमांक टाका (६, ७, ८, किंवा ९ ने सुरू होणारा).'
+              : lang === 'hi'
+              ? 'कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें (6, 7, 8 या 9 से शुरू होने वाला)।'
+              : 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.'}
+          </p>
+        ) : (
+          <p className="mt-1.5 text-xs text-muted">
+            {t('otpNote')}
+          </p>
+        )}
       </div>
 
       <button
         id="send-otp-btn"
-        onClick={onSubmit}
-        disabled={mobile.replace(/\D/g, '').length < 10}
+        onClick={handleFormSubmit}
+        disabled={!isValid}
         className={`btn-primary w-full py-3.5 text-base shadow-sm transition-all ${
-          mobile.replace(/\D/g, '').length < 10
+          !isValid
             ? 'opacity-50 cursor-not-allowed'
             : 'hover:shadow-md'
         }`}
